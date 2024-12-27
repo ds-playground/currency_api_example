@@ -2,9 +2,6 @@
 # Windows, Mac OX, Python, and R
 # Add project specific ignore list below
 
-# Large data file
-causaLens/lob_data.csv
-
 ########################################################################
 # Windows image file caches
 Thumbs.db
@@ -182,3 +179,5 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 
+# Dev files
+*_dev*.*
