@@ -31,7 +31,8 @@ def convert_currency():
     return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
+    # app.run(debug=True)
 
 # Run the app
 # python currency_converter.py
