@@ -25,7 +25,7 @@ This project implements a Currency Converter REST API using Python and Flask. It
 ### Response (JSON)
 ```
 {
-  "quantity": 1280.0,
+  "quantity": 781.25,
   "ccy": "GBP"
 }
 ```
