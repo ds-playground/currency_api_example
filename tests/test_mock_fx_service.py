@@ -18,12 +18,12 @@ class TestMockFXService(unittest.TestCase):
     def test_get_rate_invalid_pair(self):
         response = self.client.get("/rate?ccy_pair=INVALID")
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.data.decode(), "Rate not found")
+        self.assertEqual(response.data.decode(), "Rate not found for currency pair: INVALID")
 
     def test_get_rate_missing_pair(self):
         response = self.client.get("/rate")
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.data.decode(), "Rate not found")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data.decode(), "Missing ccy_pair parameter")
 
 if __name__ == "__main__":
     unittest.main()
