@@ -1,2 +1,9 @@
 Flask
 requests
+fastapi
+httpx
+uvicorn
+pytest
+pytest-asyncio
+pytest-cov
+cachetools
