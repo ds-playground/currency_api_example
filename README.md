@@ -3,19 +3,21 @@
 This project implements a modern Currency Converter REST API using Python and FastAPI. It provides fast, type-safe currency conversion with robust error handling and built-in caching.
 
 ## Features
-- RESTful API built with FastAPI for high performance and type safety
+- Modern async RESTful API built with FastAPI for high performance and type safety
 - Comprehensive validation using Pydantic models
 - Smart FX rate handling:
   - Direct rate conversion when available
   - Automatic inverse rate calculation
   - USD-based triangulation for cross-rates
-- Built-in caching with TTL for improved performance
-- Modular architecture with clear separation of concerns:
-  - Currency validation service
-  - FX rate service with caching
-  - Currency conversion service
-  - Precise currency rounding service
-- Comprehensive test suite with 50+ test cases
+- Efficient caching with TTLCache for time-based expiration
+- Clean modular architecture with service layers:
+  - Currency Validation Service: Input validation and currency code verification
+  - FX Rate Service: Async rate fetching with caching
+  - Currency Conversion Service: Business logic for currency conversion
+  - Currency Rounder Service: Precise decimal rounding for financial calculations
+- Asynchronous HTTP client (httpx) for improved performance
+- Comprehensive test suite with both unit and integration tests
+- Clear separation of concerns following SOLID principles
 - Configuration-driven design
 - Detailed error messages and proper HTTP status codes
 - Async/await support for improved scalability
@@ -92,7 +94,7 @@ python mock_fx_service/app.py
 
 2. Start the main API service:
 ```bash
-uvicorn app:app --reload
+uvicorn main:app --reload
 ```
 
 The API will be available at `http://localhost:8000`
@@ -116,11 +118,8 @@ python -m pytest tests/test_currency_*.py -v
 # API tests only
 python -m pytest tests/test_api.py -v
 
-# Integration tests
-python -m pytest tests/test_integration.py -v
-
 # Mock FX Service tests
-python -m pytest mock_fx_service/tests/test_mock_service.py -v
+python -m pytest tests/test_mock_fx_service.py -v
 ```
 
 ### Mock FX Service Tests
@@ -207,35 +206,81 @@ gbp_usd = get_fx_rate("GBPUSD")
 print(f"GBP/USD: {gbp_usd}")  # GBP/USD: 1.28
 ```
 
-#### Using Python - Asynchronous
+#### Using Python - Modern Async Implementation
 ```python
 import httpx
+import asyncio
+from typing import Dict, List, Tuple
 
-async def get_fx_rate(ccy_pair: str) -> float:
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"http://localhost:5001/rate",
+class CurrencyClient:
+    def __init__(self, base_url: str = "http://localhost:8000"):
+        self.base_url = base_url
+        self.client = httpx.AsyncClient()
+
+    async def convert_currency(self, from_ccy: str, to_ccy: str, quantity: float) -> Dict:
+        """
+        Convert currency using the async API.
+        """
+        response = await self.client.post(
+            f"{self.base_url}/convert",
+            json={
+                "ccy_from": from_ccy,
+                "ccy_to": to_ccy,
+                "quantity": quantity
+            }
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def get_fx_rate(self, ccy_pair: str) -> float:
+        """
+        Get FX rate from the mock service.
+        """
+        response = await self.client.get(
+            "http://localhost:5001/rate",
             params={"ccy_pair": ccy_pair}
         )
         response.raise_for_status()
         return float(response.text)
 
-# Usage in async function
-async def fetch_rates():
-    # Fetch multiple rates concurrently
-    rates = await asyncio.gather(
-        get_fx_rate("EURUSD"),
-        get_fx_rate("GBPUSD"),
-        get_fx_rate("USDJPY")
-    )
-    return dict(zip(["EUR/USD", "GBP/USD", "USD/JPY"], rates))
+    async def batch_convert(self, conversions: List[Tuple[str, str, float]]) -> List[Dict]:
+        """
+        Perform multiple currency conversions concurrently.
+        """
+        tasks = [
+            self.convert_currency(from_ccy, to_ccy, amount)
+            for from_ccy, to_ccy, amount in conversions
+        ]
+        return await asyncio.gather(*tasks, return_exceptions=True)
 
-# Example output:
-# {
-#     'EUR/USD': 1.10,
-#     'GBP/USD': 1.28,
-#     'USD/JPY': 145.00
-# }
+    async def close(self):
+        await self.client.aclose()
+
+# Usage example
+async def main():
+    client = CurrencyClient()
+    try:
+        # Single conversion
+        result = await client.convert_currency("EUR", "USD", 100)
+        print(f"EUR to USD: {result}")
+
+        # Multiple concurrent conversions
+        conversions = [
+            ("EUR", "USD", 100),
+            ("GBP", "JPY", 50),
+            ("USD", "EUR", 75)
+        ]
+        results = await client.batch_convert(conversions)
+        for conv, result in zip(conversions, results):
+            if isinstance(result, Exception):
+                print(f"Error converting {conv}: {result}")
+            else:
+                print(f"{conv[0]} to {conv[1]}: {result}")
+    finally:
+        await client.close()
+
+# Run with:
+# asyncio.run(main())
 ```
 
 ### Currency Conversion API
@@ -691,7 +736,35 @@ ROUNDING_PRECISION = 2
 ```python
 # Cache duration for FX rates in seconds
 CACHE_TTL = 60
+
+# TTLCache settings
+CACHE_MAX_SIZE = 100  # Maximum number of currency pairs to cache
+CACHE_TTL = 60      # Time-to-live in seconds for cache entries
 ```
+
+### Service Layer Architecture
+The application follows a clean, modular architecture with distinct service layers:
+
+1. **Currency Validation Service** (`services/currency_validator.py`)
+   - Validates currency codes against supported currencies
+   - Ensures input data meets business rules
+   - Provides reusable validation logic
+
+2. **FX Rate Service** (`services/fx_rate_service.py`)
+   - Handles async communication with FX rate providers
+   - Implements TTLCache for automatic cache expiration
+   - Manages cached rate lookups and refreshes
+   - Supports direct rates and calculated cross-rates
+
+3. **Currency Conversion Service** (`services/currency_conversion_service.py`)
+   - Implements core conversion business logic
+   - Coordinates between other services
+   - Handles conversion calculations and error cases
+
+4. **Currency Rounder Service** (`services/currency_rounder.py`)
+   - Provides precise decimal rounding for financial calculations
+   - Ensures consistent rounding behavior across the application
+   - Configurable precision levels
 
 ### Mock Service Configuration
 ```python
@@ -707,7 +780,7 @@ MOCK_FX_RATES = {
 ## Project Structure
 ```
 currency_api_example/
-├── app.py                 # FastAPI application entry point
+├── main.py                # FastAPI application entry point
 ├── config/
 │   └── app_config.py     # Configuration settings
 ├── routers/
@@ -723,8 +796,11 @@ currency_api_example/
 │   └── tests/           # Mock service tests
 ├── tests/               # Main test suite
 │   ├── test_api.py      # API endpoint tests
-│   ├── test_integration.py  # Integration tests
-│   └── test_*.py        # Unit tests
+│   ├── test_currency_api.py      # Currency API tests
+│   ├── test_currency_conversion.py  # Conversion service tests
+│   ├── test_currency_validator.py  # Validation tests
+│   ├── test_fx_rate_service.py    # FX rate service tests
+│   └── test_mock_fx_service.py    # Mock service tests
 └── requirements.txt     # Project dependencies
 ```
 
