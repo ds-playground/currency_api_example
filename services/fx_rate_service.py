@@ -21,11 +21,21 @@ class FXRateService:
         except KeyError:
             # Cache miss, fetch from API
             async with httpx.AsyncClient() as client:
+                logger.debug("Making API request...")
                 response = await client.get(f"{FX_RATE_API_URL}?ccy_pair={ccy_pair}")
-                await response.aread()  # Ensure the response is fully read
-                if response.is_error:  # Check for errors without async call
-                    response.raise_for_status()  # This will raise the appropriate error
-                rate = float(response.text)
+                # Check for errors first
+                logger.debug(f"Reading response... is_error: {response.is_error}")
+                await response.aread()  # Ensure the response is fully read                
+                if response.is_error:
+                    await response.raise_for_status()  # This will raise the appropriate error
+
+                # Only try to parse the rate if we don't have an error
+                try:
+                    logger.debug(f"Parsing response text: {response.text!r}")
+                    rate = float(response.text)
+                except ValueError as e:
+                    logger.error(f"Invalid rate format received for {ccy_pair}: {response.text}")
+                    raise ValueError(f"Invalid rate format received from API: {response.text}") from e
                 
                 # Store in cache
                 logger.debug(f"Fetched rate from API for {ccy_pair}")
