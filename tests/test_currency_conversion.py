@@ -1,4 +1,5 @@
 import unittest
+from decimal import Decimal
 from services.currency_conversion_service import CurrencyConversionService
 from services.currency_rounder import CurrencyRounder
 from config.app_config import ROUNDING_PRECISION
@@ -61,6 +62,51 @@ class TestCurrencyRounding(unittest.TestCase):
         value = 123.4567
         precision = 3
         self.assertEqual(CurrencyRounder.round(value, precision), round(value, precision))
+
+class TestDecimalQuantization(unittest.TestCase):
+    def test_quantize_decimal_standard_case(self):
+        """Test standard decimal quantization with 2 decimal places"""
+        value = Decimal('123.4567')
+        result = CurrencyRounder._quantize_decimal(value, 2)
+        self.assertEqual(str(result), '123.46')
+
+    def test_quantize_decimal_higher_precision(self):
+        """Test quantization with higher precision (4 decimal places)"""
+        value = Decimal('123.45678')
+        result = CurrencyRounder._quantize_decimal(value, 4)
+        self.assertEqual(str(result), '123.4568')
+
+    def test_quantize_decimal_zero_precision(self):
+        """Test quantization with zero decimal places (rounding to integer)"""
+        value = Decimal('123.6')
+        result = CurrencyRounder._quantize_decimal(value, 0)
+        self.assertEqual(str(result), '124')
+
+    def test_quantize_decimal_exact_value(self):
+        """Test quantization when value already has exact precision"""
+        value = Decimal('123.45')
+        result = CurrencyRounder._quantize_decimal(value, 2)
+        self.assertEqual(str(result), '123.45')
+
+    def test_quantize_decimal_negative_values(self):
+        """Test quantization with negative values"""
+        value = Decimal('-123.456')
+        result = CurrencyRounder._quantize_decimal(value, 2)
+        self.assertEqual(str(result), '-123.46')
+
+    def test_quantize_decimal_midpoint_rounding(self):
+        """Test midpoint rounding behavior (half-up)"""
+        test_cases = [
+            ('1.5', 0, '2'),     # 1.5 rounds up to 2
+            ('2.5', 0, '3'),     # 2.5 rounds up to 3
+            ('1.25', 1, '1.3'),  # 1.25 rounds up to 1.3
+            ('1.35', 1, '1.4'),  # 1.35 rounds up to 1.4
+        ]
+        
+        for value, precision, expected in test_cases:
+            with self.subTest(value=value, precision=precision):
+                result = CurrencyRounder._quantize_decimal(Decimal(value), precision)
+                self.assertEqual(str(result), expected)
 
 if __name__ == "__main__":
     unittest.main()
