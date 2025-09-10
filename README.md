@@ -93,11 +93,22 @@ python mock_fx_service/app.py
 ```
 
 2. Start the main API service:
+
+For normal operation:
 ```bash
 uvicorn main:app --reload
 ```
 
-The API will be available at `http://localhost:8000`
+For debugging and detailed logging:
+```bash
+uvicorn main:app --reload --log-level debug
+```
+
+The API will be available at `http://localhost:8000`. When running with debug logging, you'll see:
+- Cache operations (hits and misses)
+- Current cache state
+- API requests and responses
+- Rate fetching details
 
 ### Interactive API Documentation
 - Swagger UI: `http://localhost:8000/docs`
