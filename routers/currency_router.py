@@ -26,7 +26,11 @@ async def convert_currency(request: ConversionRequest):
         
         fx_service = FXRateService()
         try:
-            fx_rates = await fx_service.get_rates()
+            # Get rates for source and target currencies
+            fx_rates_from = await fx_service.get_rates(request.ccy_from)
+            fx_rates_to = await fx_service.get_rates(request.ccy_to)
+            # Merge the two rate dictionaries
+            fx_rates = {**fx_rates_from, **fx_rates_to}
         except Exception as e:
             raise HTTPException(status_code=500, detail="Internal server error: Failed to fetch rates")
         
