@@ -780,28 +780,30 @@ MOCK_FX_RATES = {
 ## Project Structure
 ```
 currency_api_example/
-├── main.py                # FastAPI application entry point
 ├── config/
-│   └── app_config.py     # Configuration settings
+│   └── app_config.py          # Configuration settings
+├── mock_fx_service/
+│   ├── app.py                 # Mock FX rate service
+│   └── tests/
+│       └── test_mock_service.py
 ├── routers/
-│   └── currency_router.py # API route handlers
+│   └── currency_router.py     # API route handlers
 ├── services/
 │   ├── currency_conversion_service.py  # Currency conversion logic
-│   ├── currency_rounder.py            # Precise decimal rounding
-│   ├── currency_validator.py          # Input validation
-│   ├── fx_rate_service.py            # Rate fetching with caching
+│   ├── currency_rounder.py            # Currency rounding utilities
+│   ├── currency_validator.py          # Currency validation
+│   ├── fx_rate_service.py            # FX rate fetching with caching
 │   └── http_client.py                # HTTP client utilities
-├── mock_fx_service/      # Mock FX rate service
-│   ├── app.py           # Mock service entry point
-│   └── tests/           # Mock service tests
-├── tests/               # Main test suite
-│   ├── test_api.py      # API endpoint tests
-│   ├── test_currency_api.py      # Currency API tests
-│   ├── test_currency_conversion.py  # Conversion service tests
-│   ├── test_currency_validator.py  # Validation tests
-│   ├── test_fx_rate_service.py    # FX rate service tests
-│   └── test_mock_fx_service.py    # Mock service tests
-└── requirements.txt     # Project dependencies
+├── tests/
+│   ├── test_api.py                   # API integration tests
+│   ├── test_currency_api.py          # Currency API tests
+│   ├── test_currency_conversion.py   # Conversion service tests
+│   ├── test_currency_rounder.py      # Rounding utility tests
+│   ├── test_currency_validator.py    # Validation tests
+│   ├── test_fx_rate_service.py       # FX rate service tests
+│   └── test_mock_fx_service.py       # Mock service tests
+├── main.py                           # FastAPI application entry point
+└── requirements.txt                  # Project dependencies
 ```
 
 ## Development Guidelines
