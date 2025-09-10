@@ -13,7 +13,7 @@ async def test_get_rate_direct_pair(fx_service):
     with patch("httpx.AsyncClient.get") as mock_get:
         mock_response = AsyncMock()
         mock_response.text = "1.28"
-        mock_response.raise_for_status = AsyncMock()
+        mock_response.raise_for_status.return_value = None  # Synchronous method
         mock_get.return_value = mock_response
 
         rate = await fx_service.get_rate("GBPUSD")
@@ -41,7 +41,7 @@ async def test_get_rates_all_currencies(fx_service):
                 mock_response.text = "1.25"
             else:
                 raise httpx.HTTPError(f"Pair {ccy_pair} not found")
-            mock_response.raise_for_status = AsyncMock()
+            mock_response.raise_for_status.return_value = None  # Synchronous method
             return mock_response
             
         mock_get.side_effect = mock_get_rate
@@ -59,7 +59,7 @@ async def test_get_rate_inverse_pair(fx_service):
     with patch("httpx.AsyncClient.get") as mock_get:
         mock_response = AsyncMock()
         mock_response.text = "1.28"
-        mock_response.raise_for_status = AsyncMock()
+        mock_response.raise_for_status.return_value = None  # Synchronous method
         mock_get.return_value = mock_response
 
         rate = await fx_service.get_rate("USDGBP")
@@ -82,7 +82,7 @@ async def test_get_rates_partial_failure(fx_service):
                 raise httpx.HTTPError("API Error")
             mock_response = AsyncMock()
             mock_response.text = "1.1"
-            mock_response.raise_for_status = AsyncMock()
+            mock_response.raise_for_status.return_value = None  # Synchronous method
             return mock_response
             
         mock_get.side_effect = mock_get_rate
@@ -96,7 +96,7 @@ async def test_cache_expiration(fx_service):
     with patch("httpx.AsyncClient.get") as mock_get:
         mock_response = AsyncMock()
         mock_response.text = "1.28"
-        mock_response.raise_for_status = AsyncMock()
+        mock_response.raise_for_status.return_value = None  # Synchronous method
         mock_get.return_value = mock_response
 
         # First call

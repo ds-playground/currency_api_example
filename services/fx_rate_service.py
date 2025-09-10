@@ -15,7 +15,9 @@ class FXRateService:
             # Cache miss, fetch from API
             async with httpx.AsyncClient() as client:
                 response = await client.get(f"{FX_RATE_API_URL}?ccy_pair={ccy_pair}")
-                response.raise_for_status()
+                await response.aread()  # Ensure the response is fully read
+                if response.is_error:  # Check for errors without async call
+                    response.raise_for_status()  # This will raise the appropriate error
                 rate = float(response.text)
                 
                 # Store in cache
