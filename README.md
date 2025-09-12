@@ -690,7 +690,6 @@ async def get_fx_rate_safe(ccy_pair: str) -> Optional[float]:
         raise FXServiceError(f"Invalid rate format: {e}")
 
 #### Conversion API Errors
-```python
 async def safe_convert_currency(from_ccy: str, to_ccy: str, amount: float) -> Dict[str, Any]:
     async with httpx.AsyncClient() as client:
         try:
