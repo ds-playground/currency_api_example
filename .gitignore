@@ -181,3 +181,4 @@ vignettes/*.pdf
 
 # Dev files
 *_dev*.*
+conversion_results*.csv
